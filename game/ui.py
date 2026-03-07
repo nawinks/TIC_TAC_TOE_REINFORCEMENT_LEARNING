@@ -4,9 +4,9 @@ import random
 from game.rule import TicTacToe
 
 
-# -----------------------------
-# WINDOW
-# -----------------------------
+# =============================
+# WINDOW SETTINGS
+# =============================
 
 WIDTH = 640
 HEIGHT = 760
@@ -20,9 +20,9 @@ CELL = BOARD_SIZE // GRID
 MACHINE_DELAY = 600
 
 
-# -----------------------------
+# =============================
 # COLORS
-# -----------------------------
+# =============================
 
 BG = (18, 18, 18)
 GRID_COLOR = (200, 200, 200)
@@ -36,7 +36,6 @@ BUTTON = (55, 55, 55)
 BUTTON_HOVER = (95, 95, 95)
 
 BAR = (28, 28, 28)
-
 WIN_LINE = (255, 215, 0)
 
 
@@ -60,33 +59,38 @@ class TicTacToeUI:
 
         self.game = TicTacToe()
 
+        self.state = "MENU"
+        self.mode = None
+
         self.current_player = -1
         self.game_over = False
         self.winner = 0
         self.win_line = None
 
-        self.state = "MENU"
-        self.mode = None
-
-        # machine delay
         self.machine_thinking = False
         self.machine_start = None
 
-        # buttons
+        self.init_buttons()
+
+    # =========================================================
+    # INITIALIZATION
+    # =========================================================
+
+    def init_buttons(self):
+
         self.home_btn = pygame.Rect(20, 20, 120, 40)
         self.restart_btn = pygame.Rect(WIDTH - 140, 20, 120, 40)
 
-        self.hvh_btn = pygame.Rect(WIDTH//2-160, 320, 320, 70)
-        self.hvm_btn = pygame.Rect(WIDTH//2-160, 420, 320, 70)
+        self.hvh_btn = pygame.Rect(WIDTH // 2 - 160, 320, 320, 70)
+        self.hvm_btn = pygame.Rect(WIDTH // 2 - 160, 420, 320, 70)
 
     # =========================================================
-    # BUTTON
+    # DRAW HELPERS
     # =========================================================
 
     def draw_button(self, rect, text):
 
         mouse = pygame.mouse.get_pos()
-
         color = BUTTON_HOVER if rect.collidepoint(mouse) else BUTTON
 
         pygame.draw.rect(self.screen, color, rect, border_radius=12)
@@ -96,8 +100,8 @@ class TicTacToeUI:
         self.screen.blit(
             label,
             (
-                rect.centerx - label.get_width()//2,
-                rect.centery - label.get_height()//2
+                rect.centerx - label.get_width() // 2,
+                rect.centery - label.get_height() // 2
             )
         )
 
@@ -111,7 +115,7 @@ class TicTacToeUI:
 
         self.screen.blit(
             title,
-            (WIDTH//2 - title.get_width()//2, 180)
+            (WIDTH // 2 - title.get_width() // 2, 180)
         )
 
         self.draw_button(self.hvh_btn, "Human vs Human")
@@ -125,27 +129,33 @@ class TicTacToeUI:
 
         pygame.draw.rect(self.screen, BAR, (0, 0, WIDTH, TOP_BAR))
 
-        if self.winner == 1:
-            text = "X Wins"
-        elif self.winner == -1:
-            text = "O Wins"
-        elif self.game_over:
-            text = "Draw"
-        else:
-            text = f"Turn : {'X' if self.current_player == 1 else 'O'}"
+        text = self.get_status_text()
 
         label = self.font.render(text, True, TEXT)
 
         self.screen.blit(
             label,
-            (WIDTH//2 - label.get_width()//2, 35)
+            (WIDTH // 2 - label.get_width() // 2, 35)
         )
 
         self.draw_button(self.home_btn, "Home")
         self.draw_button(self.restart_btn, "Restart")
 
+    def get_status_text(self):
+
+        if self.winner == 1:
+            return "X Wins"
+
+        if self.winner == -1:
+            return "O Wins"
+
+        if self.game_over:
+            return "Draw"
+
+        return f"Turn : {'X' if self.current_player == 1 else 'O'}"
+
     # =========================================================
-    # GRID
+    # BOARD RENDERING
     # =========================================================
 
     def draw_grid(self):
@@ -157,44 +167,46 @@ class TicTacToeUI:
             pygame.draw.line(
                 self.screen,
                 GRID_COLOR,
-                (0, offset + i*CELL),
-                (WIDTH, offset + i*CELL),
+                (0, offset + i * CELL),
+                (WIDTH, offset + i * CELL),
                 6
             )
 
             pygame.draw.line(
                 self.screen,
                 GRID_COLOR,
-                (i*CELL, offset),
-                (i*CELL, offset + BOARD_SIZE),
+                (i * CELL, offset),
+                (i * CELL, offset + BOARD_SIZE),
                 6
             )
-
-    # =========================================================
-    # MARKS
-    # =========================================================
 
     def draw_marks(self):
 
         board = self.game.board
         offset = TOP_BAR
 
-        for r in range(3):
-            for c in range(3):
+        for r in range(GRID):
+            for c in range(GRID):
 
-                cx = c*CELL + CELL//2
-                cy = offset + r*CELL + CELL//2
+                cx = c * CELL + CELL // 2
+                cy = offset + r * CELL + CELL // 2
 
                 if board[r, c] == 1:
-
-                    d = CELL//3
-
-                    pygame.draw.line(self.screen, X_COLOR, (cx-d, cy-d), (cx+d, cy+d), 10)
-                    pygame.draw.line(self.screen, X_COLOR, (cx-d, cy+d), (cx+d, cy-d), 10)
+                    self.draw_x(cx, cy)
 
                 elif board[r, c] == -1:
+                    self.draw_o(cx, cy)
 
-                    pygame.draw.circle(self.screen, O_COLOR, (cx, cy), CELL//3, 10)
+    def draw_x(self, x, y):
+
+        d = CELL // 3
+
+        pygame.draw.line(self.screen, X_COLOR, (x - d, y - d), (x + d, y + d), 10)
+        pygame.draw.line(self.screen, X_COLOR, (x - d, y + d), (x + d, y - d), 10)
+
+    def draw_o(self, x, y):
+
+        pygame.draw.circle(self.screen, O_COLOR, (x, y), CELL // 3, 10)
 
     # =========================================================
     # WIN LINE
@@ -209,63 +221,16 @@ class TicTacToeUI:
 
         offset = TOP_BAR
 
-        x1 = c1 * CELL + CELL//2
-        y1 = offset + r1 * CELL + CELL//2
+        x1 = c1 * CELL + CELL // 2
+        y1 = offset + r1 * CELL + CELL // 2
 
-        x2 = c2 * CELL + CELL//2
-        y2 = offset + r2 * CELL + CELL//2
+        x2 = c2 * CELL + CELL // 2
+        y2 = offset + r2 * CELL + CELL // 2
 
         pygame.draw.line(self.screen, WIN_LINE, (x1, y1), (x2, y2), 12)
 
     # =========================================================
-    # MACHINE MOVE
-    # =========================================================
-
-    def update_machine(self):
-
-        if not self.machine_thinking:
-            return
-
-        now = pygame.time.get_ticks()
-
-        if now - self.machine_start > MACHINE_DELAY:
-
-            actions = self.game.get_valid_actions()
-
-            if actions:
-                move = random.choice(actions)
-                self.game.make_move(move, self.current_player)
-
-            self.machine_thinking = False
-
-            self.after_move()
-
-    # =========================================================
-    # CHECK WIN LINE
-    # =========================================================
-
-    def detect_win_line(self):
-
-        b = self.game.board
-
-        for r in range(3):
-            if abs(sum(b[r, :])) == 3:
-                return ((r,0),(r,2))
-
-        for c in range(3):
-            if abs(sum(b[:, c])) == 3:
-                return ((0,c),(2,c))
-
-        if abs(b[0,0] + b[1,1] + b[2,2]) == 3:
-            return ((0,0),(2,2))
-
-        if abs(b[0,2] + b[1,1] + b[2,0]) == 3:
-            return ((0,2),(2,0))
-
-        return None
-
-    # =========================================================
-    # AFTER MOVE
+    # GAME LOGIC
     # =========================================================
 
     def after_move(self):
@@ -287,24 +252,66 @@ class TicTacToeUI:
         self.current_player *= -1
 
         if self.mode == "HVM" and self.current_player == 1:
+            self.start_machine_turn()
 
-            self.machine_thinking = True
-            self.machine_start = pygame.time.get_ticks()
+    def detect_win_line(self):
+
+        b = self.game.board
+
+        for r in range(3):
+            if abs(sum(b[r, :])) == 3:
+                return ((r, 0), (r, 2))
+
+        for c in range(3):
+            if abs(sum(b[:, c])) == 3:
+                return ((0, c), (2, c))
+
+        if abs(b[0, 0] + b[1, 1] + b[2, 2]) == 3:
+            return ((0, 0), (2, 2))
+
+        if abs(b[0, 2] + b[1, 1] + b[2, 0]) == 3:
+            return ((0, 2), (2, 0))
+
+        return None
 
     # =========================================================
-    # CLICK
+    # MACHINE
+    # =========================================================
+
+    def start_machine_turn(self):
+
+        self.machine_thinking = True
+        self.machine_start = pygame.time.get_ticks()
+
+    def update_machine(self):
+
+        if not self.machine_thinking:
+            return
+
+        if pygame.time.get_ticks() - self.machine_start < MACHINE_DELAY:
+            return
+
+        actions = self.game.get_valid_actions()
+
+        if actions:
+            move = random.choice(actions)
+            self.game.make_move(move, self.current_player)
+
+        self.machine_thinking = False
+        self.after_move()
+
+    # =========================================================
+    # INPUT
     # =========================================================
 
     def handle_click(self, pos):
 
         if self.home_btn.collidepoint(pos):
-
             self.reset()
             self.state = "MENU"
             return
 
         if self.restart_btn.collidepoint(pos):
-
             self.reset()
             return
 
@@ -313,20 +320,16 @@ class TicTacToeUI:
 
         x, y = pos
 
-        if y < TOP_BAR or y > TOP_BAR + BOARD_SIZE:
+        if not (TOP_BAR <= y <= TOP_BAR + BOARD_SIZE):
             return
 
         col = x // CELL
         row = (y - TOP_BAR) // CELL
 
-        action = row*3 + col
+        action = row * 3 + col
 
-        valid = self.game.make_move(action, self.current_player)
-
-        if not valid:
-            return
-
-        self.after_move()
+        if self.game.make_move(action, self.current_player):
+            self.after_move()
 
     # =========================================================
     # RESET
@@ -344,7 +347,7 @@ class TicTacToeUI:
         self.machine_thinking = False
 
     # =========================================================
-    # LOOP
+    # MAIN LOOP
     # =========================================================
 
     def run(self):
@@ -362,26 +365,16 @@ class TicTacToeUI:
                 if event.type == pygame.MOUSEBUTTONDOWN:
 
                     if self.state == "MENU":
-
-                        if self.hvh_btn.collidepoint(event.pos):
-                            self.mode = "HVH"
-                            self.state = "GAME"
-
-                        elif self.hvm_btn.collidepoint(event.pos):
-                            self.mode = "HVM"
-                            self.state = "GAME"
+                        self.handle_menu_click(event.pos)
 
                     else:
                         self.handle_click(event.pos)
 
             if self.state == "MENU":
-
                 self.draw_menu()
 
             else:
-
                 self.update_machine()
-
                 self.draw_header()
                 self.draw_grid()
                 self.draw_marks()
@@ -389,6 +382,20 @@ class TicTacToeUI:
 
             pygame.display.update()
             self.clock.tick(60)
+
+    # =========================================================
+    # MENU INPUT
+    # =========================================================
+
+    def handle_menu_click(self, pos):
+
+        if self.hvh_btn.collidepoint(pos):
+            self.mode = "HVH"
+            self.state = "GAME"
+
+        elif self.hvm_btn.collidepoint(pos):
+            self.mode = "HVM"
+            self.state = "GAME"
 
 
 # =========================================================
