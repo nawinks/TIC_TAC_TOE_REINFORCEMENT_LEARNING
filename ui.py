@@ -64,6 +64,7 @@ class TicTacToeUI:
         self.mode = None
 
         self.current_player = -1
+        self.score = {1: 0, -1: 0, 0: 0}
         self.game_over = False
         self.winner = 0
         self.win_line = None
@@ -144,6 +145,11 @@ class TicTacToeUI:
 
         self.draw_button(self.home_btn, "Home")
         self.draw_button(self.restart_btn, "Restart")
+        
+        self.screen.blit(
+            self.font.render(f"Score: PlayerO: {self.score[-1]}  PlayerX: {self.score[1]}, Draw: {self.score[0]}", True, TEXT),
+            (WIDTH // 2 - 100, 70)
+        )
 
     def get_status_text(self):
 
@@ -242,14 +248,14 @@ class TicTacToeUI:
         winner = self.game.check_winner(self.game.board)
 
         if winner != 0:
-
+            self.score[winner] += 1
             self.winner = winner
             self.win_line = self.detect_win_line()
             self.game_over = True
             return
 
         if self.game.is_draw(self.game.board):
-
+            self.score[0] += 1
             self.game_over = True
             return
 
@@ -319,6 +325,10 @@ class TicTacToeUI:
 
         if self.restart_btn.collidepoint(pos):
             self.reset()
+            if self.mode == "HVM":
+                self.current_player = random.choice([-1, 1])
+                if self.current_player == 1:
+                    self.start_machine_turn()
             return
 
         if self.game_over:
@@ -402,6 +412,9 @@ class TicTacToeUI:
         elif self.hvm_btn.collidepoint(pos):
             self.mode = "HVM"
             self.state = "GAME"
+            self.current_player = random.choice([-1, 1])
+            if self.current_player == 1:
+                self.start_machine_turn()
 
 
 # =========================================================

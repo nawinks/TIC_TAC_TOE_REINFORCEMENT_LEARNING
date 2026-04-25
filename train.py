@@ -38,15 +38,6 @@ class TicTacToeTrainer:
             if abs(o_count - x_count) > 1:
                 continue
 
-            # check if Anyone already won
-            winner = self.game.check_winner(board)
-            if winner == 1 and winner == -1:
-                continue
-            
-            # check if match already draw
-            if self.game.is_draw(board):
-                continue
-
             valid_states.append(board)
 
         return valid_states
@@ -116,9 +107,17 @@ class TicTacToeTrainer:
             self.policy = json.load(f)
         print(f"Policy loaded ← {path}")
         
-    def train(self, episodes=1000):
+    def train(self, episodes=50):
+        """
+         Train the agent using Value Iteration.
+         Parameters
+         ----------
+         episodes : int
+             Number of training episodes.
+         """
+        
         # Make v_max using state index as key
-        v_max = {self.board_to_index(state): 0 for state in self.states}
+        v_max = {self.board_to_index(state): -float('inf') for state in self.states}
         v_max_old = v_max.copy()
         
         # Value Iteration
@@ -130,7 +129,7 @@ class TicTacToeTrainer:
                 
                 # If no actions available, it's draw and a terminal state. Set value to 0 and continue.
                 if not actions:
-                    v_max[idx] = 0
+                    v_max[self.board_to_index(state)] = 0
                     continue
                 
                 # For each action get best Value
@@ -159,27 +158,27 @@ class TicTacToeTrainer:
                             v_max_curr = max(v_max_curr, 0)  # Draw gives reward 0
                         else:
                             # Iterate over opponent's possible moves
+                            v_min_opp_side = float('inf')
                             for opponent_action in opponent_actions:
                                 opponent_next_state = self.game.make_move(next_state.copy(), opponent_action, -1)
                                 is_opp_draw = self.game.is_draw(opponent_next_state)
                                 if is_opp_draw:
-                                    v_max_curr = max(v_max_curr, 0)  # Draw gives reward 0
-                                    break
+                                    v_min_opp_side = min(v_min_opp_side, 0)  # Draw gives reward 0
+                                    continue
                                 opponent_winner = self.game.check_winner(opponent_next_state)
                                 if opponent_winner == -1:  # Opponent wins
-                                    v_max_curr = max(v_max_curr, -1)  # Loss gives reward -1
-                                    break
+                                    v_min_opp_side = min(v_min_opp_side, -1)  # Loss gives reward -1
                                 elif opponent_winner == 1:  # Computer wins (unlikely in opponent's turn)
-                                    v_max_curr = max(v_max_curr, 1)  # Win gives reward 1
-                                    break
+                                    v_min_opp_side = min(v_min_opp_side, 1)  # Win gives reward 1
                                 else:
                                     # If no winner and no draw, use value of next state
                                     next_state_index = self.board_to_index(opponent_next_state)
-                                    v_max_curr = max(v_max_curr, self.gamma * v_max_old[next_state_index])
-                state_idx = self.board_to_index(state)
-                v_max[state_idx] = v_max_curr
+                                    v_min_opp_side = min(v_min_opp_side, self.gamma * v_max_old[next_state_index])
+                            v_max_curr = max(v_max_curr, v_min_opp_side)  # Assume opponent plays optimally (minimize our value)
+                v_max[self.board_to_index(state)] = v_max_curr
             # Update old values for next iteration
-            v_max_old[:] = v_max
+            for idx in v_max:
+                v_max_old[idx] = v_max[idx]
     
         # Derive policy from value function
         for idx, state in enumerate(self.states):
