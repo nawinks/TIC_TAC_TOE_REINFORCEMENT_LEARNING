@@ -148,7 +148,7 @@ class TicTacToeUI:
         
         self.screen.blit(
             self.font.render(f"Score: PlayerO: {self.score[-1]}  PlayerX: {self.score[1]}, Draw: {self.score[0]}", True, TEXT),
-            (WIDTH // 2 - 100, 70)
+            (WIDTH // 5, 60)
         )
 
     def get_status_text(self):
