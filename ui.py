@@ -1,7 +1,9 @@
 import pygame
 import sys
 import random
-from game.rule import TicTacToe
+from game import TicTacToe
+import numpy as np
+from train import TicTacToeTrainer
 
 
 # =============================
@@ -46,7 +48,6 @@ WIN_LINE = (255, 215, 0)
 class TicTacToeUI:
 
     def __init__(self):
-
         pygame.init()
 
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -71,6 +72,9 @@ class TicTacToeUI:
         self.machine_start = None
 
         self.init_buttons()
+        
+        self.train = TicTacToeTrainer(self.game)
+        self.train.load_policy("tictactoe_policy.json")
 
     # =========================================================
     # INITIALIZATION
@@ -235,7 +239,7 @@ class TicTacToeUI:
 
     def after_move(self):
 
-        winner = self.game.check_winner()
+        winner = self.game.check_winner(self.game.board)
 
         if winner != 0:
 
@@ -244,7 +248,7 @@ class TicTacToeUI:
             self.game_over = True
             return
 
-        if self.game.is_draw():
+        if self.game.is_draw(self.game.board):
 
             self.game_over = True
             return
@@ -291,11 +295,13 @@ class TicTacToeUI:
         if pygame.time.get_ticks() - self.machine_start < MACHINE_DELAY:
             return
 
-        actions = self.game.get_valid_actions()
+        actions = self.game.get_valid_actions(self.game.board)
 
         if actions:
-            move = random.choice(actions)
-            self.game.make_move(move, self.current_player)
+            # move = random.choice(actions)
+            idx = self.train.board_to_index(self.game.board, computer=self.current_player)
+            move = self.train.policy[str(idx)]
+            self.game.board = self.game.make_move(self.game.board, move, self.current_player)
 
         self.machine_thinking = False
         self.after_move()
@@ -328,8 +334,8 @@ class TicTacToeUI:
 
         action = row * 3 + col
 
-        if self.game.make_move(action, self.current_player):
-            self.after_move()
+        self.game.board = self.game.make_move(self.game.board, action, self.current_player)
+        self.after_move()
 
     # =========================================================
     # RESET

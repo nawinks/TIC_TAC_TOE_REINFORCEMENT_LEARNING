@@ -22,12 +22,20 @@ class TicTacToe:
 
     def __init__(self):
         self.board = np.zeros((3, 3), dtype=int)
+        
+    def map_XO_to_number(self, player):
+        if player == 'X':
+            return 1
+        elif player == 'O':
+            return -1
+        else:
+            raise ValueError("Invalid player: must be 'X' or 'O'")
 
     def reset(self):
         """Reset board to empty state"""
         self.board[:] = 0
 
-    def make_move(self, action: int, player: int) -> bool:
+    def make_move(self, board, action: int, player: int) -> bool:
         """
         Place a move on board.
 
@@ -46,24 +54,24 @@ class TicTacToe:
         """
         r, c = divmod(action, 3)
 
-        if self.board[r, c] != 0:
-            return False
+        if board[r, c] != 0:
+            raise ValueError("Invalid move: cell already occupied")
 
-        self.board[r, c] = player
-        return True
+        board[r, c] = player
+        return board
 
-    def get_valid_actions(self):
+    def get_valid_actions(self, board):
         """
         Returns list of empty cell indices
         """
         actions = []
         for i in range(9):
             r, c = divmod(i, 3)
-            if self.board[r, c] == 0:
+            if board[r, c] == 0:
                 actions.append(i)
         return actions
 
-    def check_winner(self):
+    def check_winner(self, board):
         """
         Check winner of game.
 
@@ -77,14 +85,14 @@ class TicTacToe:
         lines = []
 
         # rows
-        lines.extend(self.board)
+        lines.extend(board)
 
         # columns
-        lines.extend(self.board.T)
+        lines.extend(board.T)
 
         # diagonals
-        lines.append(np.diag(self.board))
-        lines.append(np.diag(np.fliplr(self.board)))
+        lines.append(np.diag(board))
+        lines.append(np.diag(np.fliplr(board)))
 
         for line in lines:
             s = np.sum(line)
@@ -95,8 +103,8 @@ class TicTacToe:
 
         return 0
 
-    def is_draw(self):
+    def is_draw(self, board):
         """
         Check if game ended in draw.
         """
-        return np.all(self.board != 0) and self.check_winner() == 0
+        return np.all(board != 0) and self.check_winner(board) == 0
